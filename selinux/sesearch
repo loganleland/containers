@@ -1,0 +1,1 @@
+docker container run --rm --mount type=bind,source=$(realpath $1),target=/tmp/policy,readonly selinux sesearch -A /tmp/policy
