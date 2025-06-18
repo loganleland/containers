@@ -1,3 +1,5 @@
+# Generate graphs of interest from the output of sesearch
+
 from typing import Dict, List
 
 
@@ -17,6 +19,7 @@ class allow:
         self.graph = dict()
         self.chr_graph = dict()
         self.untrusted = dict()
+        self.untrusted_open = dict()
         self.parse()
         self.base = """<!DOCTYPE html>
 <meta charset="utf-8">
@@ -61,8 +64,8 @@ g.append("defs").append("marker")
   .attr("fill", "pink");
 
 let simulation = d3.forceSimulation(nodes)
-  .force("link", d3.forceLink(links).id(d => d.id).distance(130))
-  .force("charge", d3.forceManyBody().strength(-500))
+  .force("link", d3.forceLink(links).id(d => d.id).distance(230))
+  .force("charge", d3.forceManyBody().strength(-900))
   .force("center", d3.forceCenter(width / 2, height / 2));
 
 let link = g.append("g")
@@ -182,11 +185,16 @@ simulation.on("tick", () => {
             self.untrusted[source] = [(destination, permission)]
           else:
             self.untrusted[source].append((destination, permission))
-
+          if "open" in permission:
+            if source not in self.untrusted_open.keys():
+                self.untrusted_open[source] = [(destination, permission)]
+            else:
+                self.untrusted_open[source].append((destination, permission))
+ 
       print(f"graph: {len(list(self.graph.keys()))}")
       print(f"chr graph: {len(list(self.chr_graph.keys()))}")
       print(f"untrusted graph: {len(list(self.untrusted.keys()))}")
-
+      print(f"untrusted open graph: {len(list(self.untrusted_open.keys()))}")
 
     # generate a d3 javascript representation
     def show(self, graph):
@@ -223,14 +231,21 @@ simulation.on("tick", () => {
 
 
 if __name__ == "__main__":
-    policy = allow("allow_15")
+    policy = allow("allow_16")
     html = policy.show(policy.graph)
     chr = policy.show(policy.chr_graph)
     untrusted = policy.show(policy.untrusted)
+    untrusted_open = policy.show(policy.untrusted_open)
+    # all allow nodes/edges
     with open("all.html", "a") as wl:
         wl.write(html)
+    # all nodes involving character devices
     with open("chr.html", "a") as wl:
         wl.write(chr)
+    # all nodes/edges involving untrusted context
     with open("untrusted.html", "a") as wl:
         wl.write(untrusted)
+    # all nodes/edges involving untrusted -> open permission
+    with open("untrusted_open.html", "a") as wl:
+        wl.write(untrusted_open)
 
